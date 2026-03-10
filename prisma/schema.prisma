@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Surgeon {
+  id                      String   @id @default(cuid())
+  name                    String
+  practiceName            String   @default("")
+  address                 String   @default("")
+  suburb                  String   @default("")
+  state                   String   @default("")
+  postcode                String   @default("")
+  phone                   String   @default("")
+  website                 String   @default("")
+
+  // Qualifications
+  experienceQualification String   @default("")
+  yearOfCompletion        Int?
+  registrationStatus      String   @default("fracs")
+
+  // Reviews
+  googleRating            Float    @default(0)
+  googleReviewCount       Int      @default(0)
+
+  // Social
+  instagram               String   @default("")
+  tiktok                  String   @default("")
+
+  // Before & After links (JSON string)
+  beforeAfterLinks        String   @default("[]")
+
+  // Procedures offered (JSON string - array of slugs)
+  proceduresOffered       String   @default("[]")
+
+  // Pricing (JSON string - Record<procedure, {min, max, notes}>)
+  priceRanges             String   @default("{}")
+
+  // Consult info
+  consultWaitTime         String   @default("")
+  consultCost             String   @default("")
+  secondConsultCost       String   @default("")
+
+  // Surgery info
+  surgeryWaitTime         String   @default("")
+
+  // Financial
+  revisionPolicy          String   @default("")
+  paymentPlansAvailable   Boolean  @default(false)
+  paymentPlanDetails      String   @default("")
+  depositInfo             String   @default("")
+
+  // Media
+  beforeAfterAvailable    Boolean  @default(false)
+
+  // Internal notes (hidden from client)
+  callExperienceNotes     String   @default("")
+  followUpNotes           String   @default("")
+  additionalInfo          String   @default("")
+
+  // Profile portal
+  profileToken            String   @unique @default(cuid())
+  lastProfileUpdate       DateTime?
+  reminderSentAt          DateTime?
+
+  // Status
+  acceptingPatients       Boolean  @default(true)
+  internalRating          Float?
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  matchSurgeons           MatchSurgeon[]
+}
+
+model Client {
+  id                String   @id @default(cuid())
+  name              String
+  email             String   @default("")
+  phone             String   @default("")
+
+  typeformRaw       String   @default("")
+  transcript        String   @default("")
+
+  procedure         String   @default("")
+  location          String   @default("")
+  state             String   @default("")
+  timeline          String   @default("")
+  budget            String   @default("")
+  paymentPlan       String   @default("")
+  priorities        String   @default("[]")
+  travelWillingness String   @default("")
+  previousConsults  String   @default("")
+  additionalNotes   String   @default("")
+
+  // Public funnel fields
+  source            String   @default("admin")  // "admin" | "quiz"
+  tier              String   @default("free")   // "free" | "guided" | "concierge"
+  paidAt            DateTime?
+  stripeSessionId   String   @default("")
+
+  // Quiz-specific fields
+  priceTransparency     String   @default("")
+  paymentPlanImportance String   @default("")
+  timeSpentResearching  String   @default("")
+  consultationStatus    String   @default("")
+  confidence            String   @default("")
+  requirements          String   @default("[]")
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  matches           Match[]
+}
+
+model Match {
+  id              String    @id @default(cuid())
+  clientId        String
+  client          Client    @relation(fields: [clientId], references: [id])
+
+  aiResponseRaw   String    @default("")
+  status          String    @default("draft")
+  tier            String    @default("free")   // Track which tier the match was viewed at
+
+  pdfGeneratedAt  DateTime?
+  pdfSentAt       DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  matchSurgeons   MatchSurgeon[]
+}
+
+model MatchSurgeon {
+  id                      String   @id @default(cuid())
+  matchId                 String
+  match                   Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  surgeonId               String
+  surgeon                 Surgeon  @relation(fields: [surgeonId], references: [id])
+
+  rank                    Int
+  finalScore              Float    @default(0)
+
+  matchReason             String   @default("")
+  strengthsSummary        String   @default("")
+  considerationsSummary   String   @default("")
+  adminNotes              String   @default("")
+  isManualOverride        Boolean  @default(false)
+
+  createdAt               DateTime @default(now())
+}

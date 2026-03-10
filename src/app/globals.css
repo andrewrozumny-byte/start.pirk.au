@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --white: #FFFFFF;
+  --cream: #F9F5F2;
+  --coral: #F2705C;
+  --coral-light: #fdf0ee;
+  --coral-mid: #f4c4bb;
+  --burgundy: #4D0121;
+  --warm-grey: #66645E;
+  --near-black: #282726;
+}
+
+@theme inline {
+  --color-white: var(--white);
+  --color-cream: var(--cream);
+  --color-coral: var(--coral);
+  --color-coral-light: var(--coral-light);
+  --color-coral-mid: var(--coral-mid);
+  --color-burgundy: var(--burgundy);
+  --color-warm-grey: var(--warm-grey);
+  --color-near-black: var(--near-black);
+  --font-sans: "Outfit", sans-serif;
+}
+
+body {
+  background: var(--cream);
+  color: var(--near-black);
+  font-family: "Outfit", sans-serif;
+}
+
+/* Utility classes for Pirk brand */
+.text-pirk-heading {
+  letter-spacing: -0.04em;
+}
+
+.text-pirk-sub {
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.625rem;
+}
