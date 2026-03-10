@@ -59,6 +59,8 @@ const trustBadges = [
 ];
 
 export default function Hero() {
+  const [heroImageError, setHeroImageError] = useState(false);
+
   return (
     <section className="relative overflow-hidden bg-cream pt-28 pb-16 md:pt-36 md:pb-24">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-cream via-cream to-coral-light/30" />
@@ -156,14 +158,22 @@ export default function Hero() {
             transition={{ delay: 0.2, duration: 0.7 }}
             className="space-y-4"
           >
-            <Image
-              src="/images/hero-group.jpg"
-              alt="Group of confident women — Pirk clients"
-              width={800}
-              height={600}
-              className="w-full rounded-xl object-cover"
-              priority
-            />
+            {heroImageError ? (
+              <div className="flex aspect-[4/3] w-full items-center justify-center rounded-xl bg-coral-light/30 text-warm-grey">
+                Image unavailable
+              </div>
+            ) : (
+              <Image
+                src="/images/hero-group.jpg"
+                alt="Group of confident women — Pirk clients"
+                width={800}
+                height={600}
+                className="w-full rounded-xl object-cover"
+                priority
+                unoptimized
+                onError={() => setHeroImageError(true)}
+              />
+            )}
             {/* Mini testimonial in hero */}
             <div className="rounded-lg border border-coral/8 bg-white/70 px-5 py-4 backdrop-blur-sm">
               <div className="flex gap-0.5">

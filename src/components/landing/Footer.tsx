@@ -23,6 +23,7 @@ export default function Footer() {
                 width={90}
                 height={32}
                 className="h-8 w-auto brightness-0 invert"
+                unoptimized
               />
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-cream/60">
