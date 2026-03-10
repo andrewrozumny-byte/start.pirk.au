@@ -51,6 +51,22 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+SQLite doesn’t work on Vercel’s serverless platform. Use **Turso** (serverless SQLite) instead.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Create a Turso database** at [turso.tech](https://turso.tech) or via CLI:
+   ```bash
+   npx turso db create pirk
+   npx turso db tokens create pirk
+   npx turso db show pirk --url  # get the URL
+   ```
+
+2. **Apply schema to Turso** — `prisma db push` doesn't work with remote Turso:
+   ```bash
+   turso db shell pirk < prisma/turso-init.sql
+   ```
+
+3. **Configure Vercel env vars** (Project → Settings → Environment Variables):
+   - `TURSO_DATABASE_URL` — Turso database URL (e.g. `libsql://pirk-xxx.turso.io`)
+   - `TURSO_AUTH_TOKEN` — Turso auth token
+
+4. Deploy. The app uses Turso when these env vars are set; locally it uses SQLite (`pirk.db`).
