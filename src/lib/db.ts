@@ -10,11 +10,19 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient() {
   const tursoUrl = process.env.TURSO_DATABASE_URL;
   const tursoToken = process.env.TURSO_AUTH_TOKEN;
+  const isVercel = process.env.VERCEL === "1";
 
   if (tursoUrl && tursoToken) {
     // Turso (Vercel/serverless) — uses HTTP, no native deps
     const adapter = new PrismaLibSql({ url: tursoUrl, authToken: tursoToken });
     return new PrismaClient({ adapter });
+  }
+
+  if (isVercel) {
+    throw new Error(
+      "On Vercel, set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in Project Settings → Environment Variables. " +
+        "See README → Deploy on Vercel."
+    );
   }
 
   // Local SQLite (dev)

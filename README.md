@@ -18,7 +18,7 @@ This is a [Next.js](https://nextjs.org) project — Pirk surgeon matching funnel
    npx prisma db push
    ```
 
-3. **Environment variables** — copy `.env.example` to `.env` and fill in values. Stripe keys are required for payments.
+3. **Environment variables** — copy `.env.example` to `.env` and fill in values. For local dev you can leave `TURSO_*` unset (uses SQLite). Stripe keys are required for payments.
 
 4. **Surgeon data** — Import surgeons via `/surgeons/import` (CSV/Excel) for matching to work. Without surgeons, quiz results will show placeholder cards.
 
@@ -51,22 +51,62 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-SQLite doesn’t work on Vercel’s serverless platform. Use **Turso** (serverless SQLite) instead.
+SQLite doesn’t work on Vercel’s serverless platform. You **must** use **Turso** and set env vars, or the app will throw a clear error instead of opening a DB file.
 
-1. **Create a Turso database** at [turso.tech](https://turso.tech) or via CLI:
-   ```bash
-   npx turso db create pirk
-   npx turso db tokens create pirk
-   npx turso db show pirk --url  # get the URL
-   ```
+### 1. Create Turso database
 
-2. **Apply schema to Turso** — `prisma db push` doesn't work with remote Turso:
-   ```bash
-   turso db shell pirk < prisma/turso-init.sql
-   ```
+At [turso.tech](https://turso.tech) or via CLI:
 
-3. **Configure Vercel env vars** (Project → Settings → Environment Variables):
-   - `TURSO_DATABASE_URL` — Turso database URL (e.g. `libsql://pirk-xxx.turso.io`)
-   - `TURSO_AUTH_TOKEN` — Turso auth token
+```bash
+npx turso db create pirk
+npx turso db tokens create pirk
+npx turso db show pirk --url   # copy the URL
+```
 
-4. Deploy. The app uses Turso when these env vars are set; locally it uses SQLite (`pirk.db`).
+### 2. Apply schema to Turso
+
+`prisma db push` does not work with remote Turso. Use the included SQL file:
+
+```bash
+turso db shell pirk < prisma/turso-init.sql
+```
+
+### 3. Migrate existing local data (optional)
+
+If you have data in local `prisma/pirk.db` (surgeons, matches, etc.):
+
+```bash
+# Unset Turso so the script uses local SQLite
+unset TURSO_DATABASE_URL TURSO_AUTH_TOKEN
+npx tsx scripts/export-local-to-turso.ts > turso-data.sql
+turso db shell pirk < turso-data.sql
+```
+
+### 4. Set Vercel environment variables
+
+In the Vercel project: **Settings → Environment Variables**. Add:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TURSO_DATABASE_URL` | **Yes** (on Vercel) | Turso URL, e.g. `libsql://pirk-xxx.turso.io` |
+| `TURSO_AUTH_TOKEN` | **Yes** (on Vercel) | Turso auth token from `turso db tokens create` |
+| `STRIPE_SECRET_KEY` | For payments | Stripe secret key |
+| `STRIPE_PRICE_ID` | For payments | Default Stripe price ID |
+| `NEXT_PUBLIC_BASE_URL` | Recommended | Production URL, e.g. `https://your-app.vercel.app` |
+| `ANTHROPIC_API_KEY` | For AI matching | Anthropic API key |
+
+Apply to **Production** and **Preview** as needed, then redeploy.
+
+### 5. Redeploy
+
+After saving env vars, trigger a new deployment (e.g. push a commit or **Redeploy** in the Vercel dashboard). The app will use Turso when `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are set.
+
+---
+
+## Production checklist
+
+- [ ] Turso database created and schema applied (`prisma/turso-init.sql`)
+- [ ] Local data migrated to Turso if needed (`npm run export:turso` → `turso db shell pirk < turso-data.sql`)
+- [ ] Vercel env vars set: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, plus Stripe / Anthropic / base URL as needed
+- [ ] Surgeon data imported (e.g. via `/surgeons/import`) on production or migrated
+- [ ] Preview PIN changed or removed in `src/middleware.ts` and `src/app/api/preview-auth/route.ts` if going fully public
